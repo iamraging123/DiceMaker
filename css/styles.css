@@ -293,7 +293,7 @@ textarea {
   border: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0;
@@ -316,7 +316,6 @@ textarea {
 .btn:hover::after { color: var(--ink); }
 .btn:active { opacity: 0.4; }
 
-.btn-primary { font-weight: 500; }
 .btn-primary::after { color: var(--ink); }
 
 .custom-panel {
