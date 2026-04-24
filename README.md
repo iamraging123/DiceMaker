@@ -15,12 +15,8 @@ An interactive web app for designing and customizing 3D polyhedral dice JavaScri
   - `custom` Paste any vertex/face list
 - **Per-face text labels** add text with sub and superscript
 - **Color customization** for faces, edges, text, and background
-- **Metallic finish toggle** and optional edge wireframe
 - **Kinematic roll animation** — click *Roll* to tumble the die and land on a random face
-- **3D-print-ready geometry** with real extruded text (not textures):
-  - **Embossed** (raised) or **Engraved** (sunken — cut via boolean CSG) labels
-  - Adjustable **text depth**, **text size**, and **text bevel**
-  - Configurable **print size in millimeters** — STL exports slicer-ready
+- **3D-print-ready geometry** with embossed text
 - **Export**:
   - `STL` — binary or ASCII, sized in mm for 3D printing
   - `JSON` configuration save/load (usefullf for sharin/saving!)

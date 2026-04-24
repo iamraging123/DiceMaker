@@ -17,7 +17,7 @@ import { buildDiceMesh, updateDiceColors, updateFaceLabel, disposeDice } from '.
 import { rollDice } from './animator.js';
 import { UI } from './ui.js';
 import {
-  exportPNG, exportGLTF, exportOBJ, exportSTL,
+  exportPNG, exportSTL,
   exportConfigJSON, readConfigFile,
   encodeShareLink, decodeShareHash,
 } from './exporter.js';
@@ -61,14 +61,6 @@ const ui = new UI({
   onRoll: () => handleRoll(),
   onReset: () => scene.resetCamera(),
   onExportPNG: () => exportPNG(scene.renderer, `dice-${state.type}.png`),
-  onExportGLTF: () => {
-    if (!scene.diceGroup) return;
-    exportGLTF(scene.diceGroup, `dice-${state.type}.gltf`);
-  },
-  onExportOBJ: () => {
-    if (!scene.diceGroup) return;
-    exportOBJ(scene.diceGroup, `dice-${state.type}.obj`);
-  },
   onSaveJSON: () => exportConfigJSON(state, `dice-${state.type}-config.json`),
   onLoadJSON: async (file) => {
     try {
@@ -260,7 +252,8 @@ function handleChange(what) {
     return;
   }
   if (what === 'printSize') {
-    // Only affects export scaling; no rebuild needed.
+    // Update the in-viewport scale bar; export scale comes from state.printSizeMM.
+    scene.scaleBar.updateSize(state.printSizeMM);
     return;
   }
 }
@@ -278,6 +271,7 @@ async function handleRoll() {
 // ---------- Startup ----------
 ui.syncFromState();
 rebuildDice(true);
+scene.scaleBar.updateSize(state.printSizeMM);
 scene.start();
 
 // Kick off font load in the background; once done, add 3D text to the

@@ -12,6 +12,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ScaleBar } from './scaleBar.js';
 
 export class Scene {
   constructor(canvas) {
@@ -40,15 +41,21 @@ export class Scene {
     this.controls.minDistance = 1.6;
     this.controls.maxDistance = 14;
 
-    // Lighting — no shadow casting; the brand is shadow-free.
-    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
-    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    // Lighting — no shadow casting. Contrasty 3-point setup: low ambient so
+    // shadowed faces read dark, strong key for bright lit faces, minimal fill
+    // and a small rim so silhouettes still separate from the background.
+    const ambient = new THREE.AmbientLight(0xffffff, 0.18);
+    const key = new THREE.DirectionalLight(0xffffff, 1.7);
     key.position.set(5, 7, 5);
-    const fill = new THREE.DirectionalLight(0xffffff, 0.45);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.18);
     fill.position.set(-4, 3, -2);
-    const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.25);
     rim.position.set(0, -2, -5);
     this.scene.add(ambient, key, fill, rim);
+
+    // Print-size scale bar (below the die, always-visible).
+    this.scaleBar = new ScaleBar();
+    this.scene.add(this.scaleBar.group);
 
     this.diceGroup = null;
 
@@ -60,6 +67,19 @@ export class Scene {
     if (this.diceGroup) this.scene.remove(this.diceGroup);
     this.diceGroup = group;
     if (group) this.scene.add(group);
+    this._syncLineResolutions();
+  }
+
+  /** Fat-line material (LineMaterial) needs to know the render target size
+   *  to compute pixel widths. Walk the scene and push the current size. */
+  _syncLineResolutions() {
+    const w = this.canvas.clientWidth || this.canvas.parentElement.clientWidth;
+    const h = this.canvas.clientHeight || this.canvas.parentElement.clientHeight;
+    this.scene.traverse((o) => {
+      if (o.material && o.material.isLineMaterial) {
+        o.material.resolution.set(w, h);
+      }
+    });
   }
 
   setBackground(color) {
@@ -78,6 +98,7 @@ export class Scene {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this._syncLineResolutions();
   }
 
   render() {

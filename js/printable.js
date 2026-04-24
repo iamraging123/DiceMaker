@@ -20,8 +20,12 @@
 import * as THREE from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { parseChem } from './chem.js';
+import { EDGE_LINEWIDTH } from './diceMesh.js';
 
 const FONT_URL =
   'https://unpkg.com/three@0.165.0/examples/fonts/helvetiker_regular.typeface.json';
@@ -308,7 +312,132 @@ async function applyEngravingCSG(diceGroup, font, config) {
 }
 
 /**
+ * Build a flat LineSegments mesh that traces the outline of each labeled
+ * character — exactly the silhouette where an engraving would meet the face
+ * surface. This is driven by the font's `Shape` / hole data, not from the
+ * CSG output, so we avoid tessellation artifacts entirely.
+ */
+function buildFaceOutlineMesh(faceMeta, font, config) {
+  const { label, centroid, normal, inradius } = faceMeta;
+  if (!label) return null;
+
+  const segments = parseChem(label).filter((s) => s.text.length > 0);
+  if (segments.length === 0) return null;
+
+  const baseSize  = Math.max(inradius * 0.7, 0.15);
+  const size      = baseSize * (config.textSize ?? 1.0);
+  const smallSize = size * 0.6;
+  const subY = -size * 0.25;
+  const supY =  size * 0.35;
+  const DIV = 12; // curve subdivision count per path
+
+  // Accumulate line-segment endpoints for every contour. Each shape's outer
+  // ring + holes are emitted as boundary line segments only — no triangulation,
+  // so there is literally no way for an interior edge to slip in.
+  const positions = [];
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+  const pushRing = (pts, xOffset, yOffset) => {
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % pts.length];
+      const ax = a.x + xOffset, ay = a.y + yOffset;
+      const bx = b.x + xOffset, by = b.y + yOffset;
+      positions.push(ax, ay, 0, bx, by, 0);
+      if (ax < minX) minX = ax; if (ax > maxX) maxX = ax;
+      if (ay < minY) minY = ay; if (ay > maxY) maxY = ay;
+    }
+  };
+
+  let cursor = 0;
+  for (const seg of segments) {
+    const fs = seg.style === 'normal' ? size : smallSize;
+    const shapes = font.generateShapes(seg.text, fs);
+    if (!shapes || shapes.length === 0) continue;
+
+    // Measure segment width using the shapes' own bounds.
+    let sMinX = Infinity, sMaxX = -Infinity;
+    for (const shape of shapes) {
+      const pts = shape.getPoints(DIV);
+      for (const p of pts) {
+        if (p.x < sMinX) sMinX = p.x;
+        if (p.x > sMaxX) sMaxX = p.x;
+      }
+    }
+    const segWidth = isFinite(sMaxX - sMinX) ? sMaxX - sMinX : 0;
+    const yOff = seg.style === 'sub' ? subY : seg.style === 'sup' ? supY : 0;
+    const xOff = cursor - sMinX;
+
+    for (const shape of shapes) {
+      pushRing(shape.getPoints(DIV), xOff, yOff);
+      for (const hole of shape.holes) {
+        pushRing(hole.getPoints(DIV), xOff, yOff);
+      }
+    }
+
+    cursor += segWidth;
+  }
+
+  if (positions.length === 0) return null;
+
+  // Center the label at (0, 0), then auto-fit uniformly if it overflows the
+  // face's inscribed circle (same rules as the 3D text geom).
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const w  = maxX - minX;
+  const h  = maxY - minY;
+  const maxW = inradius * 1.65;
+  const maxH = inradius * 1.65;
+  const k = Math.min(1, maxW / Math.max(w, 1e-6), maxH / Math.max(h, 1e-6));
+
+  for (let i = 0; i < positions.length; i += 3) {
+    positions[i]     = (positions[i]     - cx) * k;
+    positions[i + 1] = (positions[i + 1] - cy) * k;
+    // positions[i + 2] stays 0 — outline is flat in XY.
+  }
+
+  const geom = new LineSegmentsGeometry();
+  geom.setPositions(positions);
+
+  const mat = new LineMaterial({
+    color: new THREE.Color(config.edgeColor ?? '#1a1a1a'),
+    linewidth: EDGE_LINEWIDTH,
+    worldUnits: false,
+    dashed: false,
+    alphaToCoverage: true,
+    resolution: new THREE.Vector2(1024, 1024),
+  });
+  const mesh = new LineSegments2(geom, mat);
+  mesh.userData.isTextOutline = true;
+  mesh.userData.faceIndex = faceMeta.faceIndex;
+
+  // Lie in the face plane (+Z = face normal) just above the surface.
+  mesh.quaternion.copy(
+    new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      normal.clone().normalize()
+    )
+  );
+  mesh.position.copy(centroid).addScaledVector(normal, 0.004);
+  return mesh;
+}
+
+/**
+ * Remove any existing text-outline line meshes from the group.
+ */
+function removeTextOutlines(diceGroup) {
+  const toRemove = diceGroup.children.filter((c) => c.userData.isTextOutline);
+  for (const m of toRemove) {
+    diceGroup.remove(m);
+    m.geometry.dispose();
+    m.material.dispose();
+  }
+}
+
+/**
  * Restore the die to its un-engraved geometry (if it was previously engraved).
+ * The edge overlay (die corners) is built once in buildDiceMesh from the plain
+ * polyhedron and never regenerated, so it stays clean through mode changes.
  */
 function restoreOriginalDie(diceGroup) {
   const orig = diceGroup.userData.originalDieGeometry;
@@ -338,6 +467,8 @@ export async function applyPrintMode(diceGroup, font, config, forceBuild = false
     m.geometry.dispose();
     m.material.dispose();
   }
+  // Also clear any prior text-outline line meshes.
+  removeTextOutlines(diceGroup);
 
   // Undo any prior engraving by restoring the original die geometry.
   restoreOriginalDie(diceGroup);
@@ -373,6 +504,16 @@ export async function applyPrintMode(diceGroup, font, config, forceBuild = false
         if (meta.labelMesh) meta.labelMesh.visible = !!meta.label;
       }
       return 'engrave-fallback';
+    }
+    // Trace the character outline on top of each engraved face so you see the
+    // silhouette of the engraving — only the character edge, not the tessellation.
+    const showEdges = config.showEdges !== false;
+    for (const meta of diceGroup.userData.faces) {
+      const outline = buildFaceOutlineMesh(meta, font, config);
+      if (outline) {
+        outline.visible = showEdges;
+        diceGroup.add(outline);
+      }
     }
     return 'engrave-ok';
   }

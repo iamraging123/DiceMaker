@@ -37,8 +37,6 @@ export class UI {
       rollBtn:     document.getElementById('roll-btn'),
       resetBtn:    document.getElementById('reset-btn'),
       pngBtn:      document.getElementById('export-png'),
-      gltfBtn:     document.getElementById('export-gltf'),
-      objBtn:      document.getElementById('export-obj'),
       saveBtn:     document.getElementById('save-config'),
       loadBtn:     document.getElementById('load-config'),
       loadFile:    document.getElementById('load-file'),
@@ -64,10 +62,8 @@ export class UI {
       textBevelVal:     document.getElementById('text-bevel-val'),
       printSize:        document.getElementById('print-size'),
       printSizeVal:     document.getElementById('print-size-val'),
-      printSizeBadge:   document.getElementById('print-size-badge'),
       exportSTL:        document.getElementById('export-stl'),
       exportSTLAscii:   document.getElementById('export-stl-ascii'),
-      printStatus:      document.getElementById('print-status'),
     };
 
     this._bind();
@@ -89,26 +85,29 @@ export class UI {
       [els.bgColor,   'bgColor',   'bg'],
     ];
     for (const [el, key, evt] of colorInputs) {
+      if (!el) continue;
       el.addEventListener('input', () => {
         state[key] = el.value;
         this.onChange(evt);
       });
     }
 
-    els.showEdges.addEventListener('change', () => {
-      state.showEdges = els.showEdges.checked;
-      this.onChange('edges');
-    });
-    els.metallic.addEventListener('change', () => {
-      state.metallic = els.metallic.checked;
-      this.onChange('metallic');
-    });
+    if (els.showEdges) {
+      els.showEdges.addEventListener('change', () => {
+        state.showEdges = els.showEdges.checked;
+        this.onChange('edges');
+      });
+    }
+    if (els.metallic) {
+      els.metallic.addEventListener('change', () => {
+        state.metallic = els.metallic.checked;
+        this.onChange('metallic');
+      });
+    }
 
     els.rollBtn.addEventListener('click', () => this.options.onRoll && this.options.onRoll());
     els.resetBtn.addEventListener('click', () => this.options.onReset && this.options.onReset());
     els.pngBtn.addEventListener('click', () => this.options.onExportPNG && this.options.onExportPNG());
-    els.gltfBtn.addEventListener('click', () => this.options.onExportGLTF && this.options.onExportGLTF());
-    els.objBtn.addEventListener('click', () => this.options.onExportOBJ && this.options.onExportOBJ());
     els.saveBtn.addEventListener('click', () => this.options.onSaveJSON && this.options.onSaveJSON());
     els.loadBtn.addEventListener('click', () => els.loadFile.click());
     els.loadFile.addEventListener('change', (e) => {
@@ -160,9 +159,7 @@ export class UI {
     bindSlider(els.printSize, els.printSizeVal, 'printSizeMM',
       (v) => String(Math.round(v)), 'printSize');
 
-    els.printSize.addEventListener('input', () => {
-      els.printSizeBadge.textContent = `${Math.round(state.printSizeMM)} mm`;
-    });
+    // (print-size-badge removed — slider's own value label is enough)
 
     els.exportSTL.addEventListener('click', () =>
       this.options.onExportSTL && this.options.onExportSTL({ binary: true }));
@@ -170,8 +167,9 @@ export class UI {
       this.options.onExportSTL && this.options.onExportSTL({ binary: false }));
   }
 
-  setPrintStatus(msg) {
-    if (this.els.printStatus) this.els.printStatus.textContent = msg;
+  setPrintStatus(_msg) {
+    // Status element was removed from the UI; this is a no-op now so the rest
+    // of the code that calls it keeps working.
   }
 
   /**
@@ -182,12 +180,12 @@ export class UI {
     const { els, state } = this;
     els.shapeSelect.value = state.type;
     els.customPanel.classList.toggle('hidden', state.type !== 'custom');
-    els.faceColor.value  = state.faceColor;
-    els.edgeColor.value  = state.edgeColor;
-    els.textColor.value  = state.textColor;
-    els.bgColor.value    = state.bgColor;
-    els.showEdges.checked = state.showEdges !== false;
-    els.metallic.checked  = !!state.metallic;
+    if (els.faceColor)  els.faceColor.value  = state.faceColor;
+    if (els.edgeColor)  els.edgeColor.value  = state.edgeColor;
+    if (els.textColor)  els.textColor.value  = state.textColor;
+    if (els.bgColor)    els.bgColor.value    = state.bgColor;
+    if (els.showEdges)  els.showEdges.checked = state.showEdges !== false;
+    if (els.metallic)   els.metallic.checked  = !!state.metallic;
     els.shapeBadge.textContent = SHAPE_LABELS[state.type] || 'dN';
 
     // Print controls
@@ -200,7 +198,6 @@ export class UI {
     els.textSizeVal.textContent   = (+els.textSize.value).toFixed(2) + '×';
     els.textBevelVal.textContent  = (+els.textBevel.value).toFixed(3);
     els.printSizeVal.textContent  = String(Math.round(+els.printSize.value));
-    els.printSizeBadge.textContent = `${Math.round(+els.printSize.value)} mm`;
   }
 
   /**

@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { parseChem } from './chem.js';
 
 const TEX_SIZE = 256;
-const FONT_STACK = '"Inter", "Helvetica Neue", Arial, sans-serif';
+const FONT_STACK = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const MAX_WIDTH = TEX_SIZE * 0.82;
 
 function measureSegments(ctx, segments, baseSize) {

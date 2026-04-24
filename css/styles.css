@@ -20,7 +20,7 @@
   --s5: 48px;
   --s6: 96px;
 
-  --sans: "Inter", "Helvetica Neue", "Aktiv Grotesk", Arial, sans-serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
   --dur: 150ms;
   --ease: cubic-bezier(0, 0, 0.2, 1);
@@ -60,7 +60,7 @@ html, body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--s6);
+  gap: var(--s5);
   font-size: 15px;
   line-height: 1.5;
   max-width: 520px;
@@ -94,8 +94,8 @@ html, body {
 .brand h1 {
   margin: 0;
   font-size: clamp(1.75rem, 3vw, 2.25rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   line-height: 1.05;
 }
 .tagline {
@@ -129,10 +129,10 @@ html, body {
 }
 .card h2 {
   margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray);
-  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
   text-transform: none;
   font-family: inherit;
 }
@@ -380,7 +380,7 @@ input[type="range"]::-moz-range-thumb {
   position: relative;
   background: var(--paper);
   overflow: hidden;
-  border-left: 1px solid var(--hairline);
+  border-left: 1px solid var(--ink);
 }
 #canvas {
   display: block;
@@ -488,7 +488,7 @@ code {
     background: var(--paper);
     transform: translateX(-100%);
     transition: transform var(--dur) var(--ease);
-    border-right: 1px solid var(--hairline);
+    border-right: 1px solid var(--ink);
     padding: var(--s4);
     gap: var(--s5);
   }
@@ -497,4 +497,23 @@ code {
   .mobile-fab { display: flex; }
   .hud-top { top: var(--s4); left: var(--s4); }
   .toast { bottom: var(--s4); left: var(--s4); }
+}
+
+/* ============================================================
+   Section dividers — placed at the end so they win the cascade
+   over `.card { border: none }` without needing !important.
+   A 1-px black line sits between every sidebar section:
+   brand → Shape → Appearance → Face labels → … → footer.
+   The first child (brand) stays flush at the top.
+
+   The negative horizontal margin + matching padding breaks each
+   section out of the sidebar's left/right padding so the black
+   rule runs from the left edge to the right edge of the sidebar,
+   while the inner content keeps its original alignment.
+   ============================================================ */
+.sidebar > * + * {
+  border-top: 1px solid var(--ink);
+  padding: var(--s5) var(--s5) 0;
+  margin-left:  calc(-1 * var(--s5));
+  margin-right: calc(-1 * var(--s5));
 }

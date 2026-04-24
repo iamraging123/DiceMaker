@@ -15,7 +15,13 @@
  */
 
 import * as THREE from 'three';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { createFaceTexture } from './faceTexture.js';
+
+/** Shared edge thickness (in CSS pixels) for die corners and text outlines. */
+export const EDGE_LINEWIDTH = 2.2;
 
 /**
  * Triangulate a convex polygon (vertex indices) using a fan from the first vertex.
@@ -124,8 +130,9 @@ export function buildDiceMesh(data, config) {
 
   const dieMaterial = new THREE.MeshStandardMaterial({
     color: new THREE.Color(config.faceColor),
-    roughness: config.metallic ? 0.25 : 0.55,
-    metalness: config.metallic ? 0.85 : 0.05,
+    // Rougher surface + flat shading → higher face-to-face contrast.
+    roughness: config.metallic ? 0.35 : 0.85,
+    metalness: config.metallic ? 0.85 : 0.0,
     flatShading: true,
   });
   const dieMesh = new THREE.Mesh(geom, dieMaterial);
@@ -134,13 +141,21 @@ export function buildDiceMesh(data, config) {
   dieMesh.name = 'dieMesh';
   group.add(dieMesh);
 
-  // ---------- Build edge lines ----------
-  const edgeGeom = new THREE.EdgesGeometry(geom, 1); // 1° threshold
-  const edgeMat = new THREE.LineBasicMaterial({
+  // ---------- Build edge lines (fat lines for real thickness) ----------
+  const rawEdges = new THREE.EdgesGeometry(geom, 1); // 1° threshold
+  const edgeGeom = new LineSegmentsGeometry();
+  edgeGeom.setPositions(rawEdges.attributes.position.array);
+  rawEdges.dispose();
+
+  const edgeMat = new LineMaterial({
     color: new THREE.Color(config.edgeColor),
-    linewidth: 1,
+    linewidth: EDGE_LINEWIDTH,
+    worldUnits: false,       // linewidth is in CSS pixels
+    dashed: false,
+    alphaToCoverage: true,
+    resolution: new THREE.Vector2(1024, 1024), // placeholder; Scene.resize() updates it
   });
-  const edgeLines = new THREE.LineSegments(edgeGeom, edgeMat);
+  const edgeLines = new LineSegments2(edgeGeom, edgeMat);
   edgeLines.name = 'edges';
   edgeLines.visible = config.showEdges !== false;
   group.add(edgeLines);
@@ -183,10 +198,19 @@ export function buildDiceMesh(data, config) {
 export function updateDiceColors(group, config) {
   const { dieMesh, edgeLines, faces } = group.userData;
   dieMesh.material.color.set(config.faceColor);
-  dieMesh.material.roughness = config.metallic ? 0.25 : 0.55;
-  dieMesh.material.metalness = config.metallic ? 0.85 : 0.05;
+  dieMesh.material.roughness = config.metallic ? 0.35 : 0.85;
+  dieMesh.material.metalness = config.metallic ? 0.85 : 0.0;
   edgeLines.material.color.set(config.edgeColor);
   edgeLines.visible = config.showEdges !== false;
+
+  // Text-outline meshes (added by printable.js for engraved text) share the
+  // edge color + visibility so they behave like edges.
+  for (const child of group.children) {
+    if (child.userData && child.userData.isTextOutline) {
+      child.material.color.set(config.edgeColor);
+      child.visible = config.showEdges !== false;
+    }
+  }
 
   for (const meta of faces) {
     if (!meta.labelTexture) continue;

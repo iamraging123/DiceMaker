@@ -15,7 +15,7 @@
     <aside class="sidebar" id="sidebar">
       <header class="brand">
         <h1>Dice maker</h1>
-        <p class="tagline">Polyhedral dice &mdash; designed in the browser.</p>
+        <p class="tagline">Designed by Luka Gruev</p>
         <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">close</button>
       </header>
 
@@ -50,10 +50,6 @@
         <div class="card-head"><h2>Appearance</h2></div>
         <div class="color-grid">
           <label class="color-field">
-            <span>Face</span>
-            <input type="color" id="face-color" value="#f4f1ec" />
-          </label>
-          <label class="color-field">
             <span>Edge</span>
             <input type="color" id="edge-color" value="#1a1a1a" />
           </label>
@@ -66,20 +62,12 @@
             <input type="color" id="bg-color" value="#f5f4f0" />
           </label>
         </div>
-        <div class="row">
-          <label class="check-field">
-            <input type="checkbox" id="show-edges" checked /> Show edges
-          </label>
-          <label class="check-field">
-            <input type="checkbox" id="metallic" /> Metallic finish
-          </label>
-        </div>
       </section>
 
       <!-- Faces -->
       <section class="card">
         <div class="card-head">
-          <h2>Face labels</h2>
+          <h2>Face text</h2>
           <span class="muted small" id="face-count">6 faces</span>
         </div>
         <p class="muted small">Use <code>_</code> for subscript, <code>^</code> for superscript. Wrap multi-character runs in <code>{ }</code> &mdash; e.g. <code>H_2O</code>, <code>SO_4^{2-}</code>, <code>Ca^{2+}</code>.</p>
@@ -98,8 +86,7 @@
       <!-- 3D Print -->
       <section class="card">
         <div class="card-head">
-          <h2>3d print</h2>
-          <span class="badge" id="print-size-badge">20 mm</span>
+          <h2>3D settings</h2>
         </div>
         <div class="slider-field">
           <div class="slider-head"><span>Text depth</span><span id="text-depth-val">0.08</span></div>
@@ -122,7 +109,6 @@
           <button class="btn btn-primary" id="export-stl">Export stl</button>
           <button class="btn" id="export-stl-ascii">Export stl &mdash; ascii</button>
         </div>
-        <p class="muted small" id="print-status">Stl exports in millimeters &mdash; slicer-ready.</p>
       </section>
 
       <!-- Export -->
@@ -130,8 +116,6 @@
         <div class="card-head"><h2>Export &amp; share</h2></div>
         <div class="btn-row">
           <button class="btn" id="export-png">Save png</button>
-          <button class="btn" id="export-gltf">Save gltf</button>
-          <button class="btn" id="export-obj">Save obj</button>
           <button class="btn" id="save-config">Save json</button>
           <button class="btn" id="load-config">Load json</button>
           <button class="btn" id="share-link">Copy share link</button>
