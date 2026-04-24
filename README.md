@@ -6,7 +6,7 @@ Great for classrooms and other activities!
 
 ## Features
 
-- **7 built-in dice shapes** + arbitrary custom polyhedra:
+- **7 built-in dice shapes** + make your own custom polyhedral:
   - `d3`  Triangular prism
   - `d4`  Tetrahedron
   - `d6`  Cube
@@ -15,7 +15,7 @@ Great for classrooms and other activities!
   - `d12` Dodecahedron
   - `d20` Icosahedron
   - `custom` Paste any vertex/face list
-- **Per-face text labels** add text with sub and superscript
+- **Per-face text labels** add text with sub and superscript (IE H_2O, SO_4^{2-}, Ca^{2+}).
 - **Color customization** for faces, edges, text, and background
 - **Kinematic roll animation** — click *Roll* to tumble the die and land on a random face
 - **3D-print-ready geometry** with embossed text
