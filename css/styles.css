@@ -342,18 +342,39 @@ textarea {
 }
 .slider-head span:last-child { color: var(--ink); }
 
+/* Sliders: the input itself is a transparent hit area (tall enough to render
+   consistently across browsers). The actual visible track is drawn by the
+   browser-specific track pseudo-element, so every slider ends up with the
+   same 2-px rule and the same gray — no more mismatched weights. */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 1px;
-  background: var(--gray);   /* darker than hairline so the track is visible */
+  height: 14px;
+  background: transparent;
   border: none;
   outline: none;
   margin: var(--s2) 0 0;
   padding: 0;
   box-shadow: none;
 }
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--gray);
+  border: none;
+  border-radius: 0;
+}
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--gray);
+  border: none;
+  border-radius: 0;
+}
+
+/* Thumb: flat 10-px ink square, vertically centered on the 2-px track.
+   WebKit positions the thumb relative to the track's top, so margin-top
+   shifts it up by (thumbHeight - trackHeight) / 2 = (10 - 2) / 2 = 4 px. */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -363,7 +384,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: none;
   cursor: pointer;
   border-radius: 0;
-  margin-top: 0;
+  margin-top: -4px;
   box-shadow: none;
 }
 input[type="range"]::-moz-range-thumb {
