@@ -112,8 +112,9 @@ function extractFacesFromBufferGeometry(geometry) {
 
 function makeD3() {
   // Triangular prism: 3 rectangular sides (labeled) + 2 triangle caps (unlabeled).
+  // Half-height kept under 1.2 so the prism clears the scale-bar ruler below.
   const r = 1;
-  const h = 1.5;
+  const h = 1.1;
   const verts = [];
   for (let i = 0; i < 3; i++) {
     const a = Math.PI / 2 + (i * 2 * Math.PI) / 3;
