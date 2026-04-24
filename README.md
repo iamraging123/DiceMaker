@@ -1,6 +1,6 @@
 # Dice Maker — 3D Polyhedral Dice Designer
 
-An interactive web app for designing and customizing 3D polyhedral dice. Built with vanilla JavaScript, HTML, CSS and [Three.js](https://threejs.org/). No build step required.
+An interactive web app for designing and customizing 3D polyhedral dice JavaScript, HTML, CSS and [Three.js](https://threejs.org/).
 
 ## Features
 
@@ -13,8 +13,7 @@ An interactive web app for designing and customizing 3D polyhedral dice. Built w
   - `d12` Dodecahedron
   - `d20` Icosahedron
   - `custom` Paste any vertex/face list
-- **Live 3D preview** — orbit, zoom, pan (OrbitControls)
-- **Per-face text labels** with instant update as you type
+- **Per-face text labels** add text with sub and superscript
 - **Color customization** for faces, edges, text, and background
 - **Metallic finish toggle** and optional edge wireframe
 - **Kinematic roll animation** — click *Roll* to tumble the die and land on a random face
