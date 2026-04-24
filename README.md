@@ -1,6 +1,8 @@
-# Dice Maker — 3D Polyhedral Dice Designer
+# Dice Maker — 3D Dice Designer
 
-An interactive web app for designing and customizing 3D polyhedral dice JavaScript, HTML, CSS and [Three.js](https://threejs.org/).
+An interactive web app for designing and customizing 3D dice using JavaScript, HTML, CSS and [Three.js](https://threejs.org/).
+
+Great for classrooms and other activities! 
 
 ## Features
 
