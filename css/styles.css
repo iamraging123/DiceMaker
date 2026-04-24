@@ -347,7 +347,7 @@ input[type="range"] {
   appearance: none;
   width: 100%;
   height: 1px;
-  background: var(--hairline);
+  background: var(--gray);   /* darker than hairline so the track is visible */
   border: none;
   outline: none;
   margin: var(--s2) 0 0;
@@ -565,4 +565,32 @@ code {
   padding: var(--s5) var(--s5) 0;
   margin-left:  calc(-1 * var(--s5));
   margin-right: calc(-1 * var(--s5));
+}
+
+/* ============================================================
+   All sidebar text reads ink (near-black). Arrows, hint text,
+   labels, value readouts — everything that used to be gray.
+   Section headings are bumped to extra-bold.
+   ============================================================ */
+.sidebar,
+.sidebar .tagline,
+.sidebar .field-label,
+.sidebar .color-field > span,
+.sidebar .slider-head,
+.sidebar .slider-head span,
+.sidebar .face-num,
+.sidebar #face-count,
+.sidebar .muted,
+.sidebar .small,
+.sidebar .footer,
+.sidebar .footer .contact-link,
+.sidebar .footer .contact-link::after,
+.sidebar .footer .contact-name a::after,
+.sidebar .btn::after,
+.sidebar code {
+  color: var(--ink);
+}
+
+.card h2 {
+  font-weight: 800;
 }
