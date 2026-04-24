@@ -142,6 +142,7 @@ export class UI {
     }
 
     const bindSlider = (input, valEl, key, format, evtName) => {
+      if (!input) return;
       const apply = () => {
         const v = parseFloat(input.value);
         state[key] = v;
@@ -192,11 +193,13 @@ export class UI {
     if (els.printMode) els.printMode.value = state.printMode ?? 'engrave';
     els.textDepth.value    = state.textDepth ?? 0.08;
     els.textSize.value     = state.textSize ?? 1.0;
-    els.textBevel.value    = state.textBevel ?? 0;
+    if (els.textBevel) els.textBevel.value = state.textBevel ?? 0;
     els.printSize.value    = state.printSizeMM ?? 20;
     els.textDepthVal.textContent  = (+els.textDepth.value).toFixed(2);
     els.textSizeVal.textContent   = (+els.textSize.value).toFixed(2) + '×';
-    els.textBevelVal.textContent  = (+els.textBevel.value).toFixed(3);
+    if (els.textBevelVal && els.textBevel) {
+      els.textBevelVal.textContent = (+els.textBevel.value).toFixed(3);
+    }
     els.printSizeVal.textContent  = String(Math.round(+els.printSize.value));
   }
 
