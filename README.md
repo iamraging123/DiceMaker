@@ -3,6 +3,9 @@
 An interactive web app for designing and customizing 3D dice using JavaScript, HTML, CSS and [Three.js](https://threejs.org/).
 
 Great for classrooms and other activities! 
+## How to use
+
+Head over to https://iamraging123.github.io/DiceMaker/ and get started!
 
 ## Features
 
