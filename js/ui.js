@@ -58,8 +58,8 @@ export class UI {
       textDepthVal:     document.getElementById('text-depth-val'),
       textSize:         document.getElementById('text-size'),
       textSizeVal:      document.getElementById('text-size-val'),
-      textBevel:        document.getElementById('text-bevel'),
-      textBevelVal:     document.getElementById('text-bevel-val'),
+      charSpacing:      document.getElementById('char-spacing'),
+      charSpacingVal:   document.getElementById('char-spacing-val'),
       printSize:        document.getElementById('print-size'),
       printSizeVal:     document.getElementById('print-size-val'),
       exportSTL:        document.getElementById('export-stl'),
@@ -155,8 +155,8 @@ export class UI {
       (v) => v.toFixed(2), 'printOpts');
     bindSlider(els.textSize, els.textSizeVal, 'textSize',
       (v) => v.toFixed(2) + '×', 'printOpts');
-    bindSlider(els.textBevel, els.textBevelVal, 'textBevel',
-      (v) => v.toFixed(3), 'printOpts');
+    bindSlider(els.charSpacing, els.charSpacingVal, 'charSpacing',
+      (v) => v.toFixed(2), 'printOpts');
     bindSlider(els.printSize, els.printSizeVal, 'printSizeMM',
       (v) => String(Math.round(v)), 'printSize');
 
@@ -193,12 +193,12 @@ export class UI {
     if (els.printMode) els.printMode.value = state.printMode ?? 'engrave';
     els.textDepth.value    = state.textDepth ?? 0.08;
     els.textSize.value     = state.textSize ?? 1.0;
-    if (els.textBevel) els.textBevel.value = state.textBevel ?? 0;
+    if (els.charSpacing) els.charSpacing.value = state.charSpacing ?? 0;
     els.printSize.value    = state.printSizeMM ?? 20;
     els.textDepthVal.textContent  = (+els.textDepth.value).toFixed(2);
     els.textSizeVal.textContent   = (+els.textSize.value).toFixed(2) + '×';
-    if (els.textBevelVal && els.textBevel) {
-      els.textBevelVal.textContent = (+els.textBevel.value).toFixed(3);
+    if (els.charSpacingVal && els.charSpacing) {
+      els.charSpacingVal.textContent = (+els.charSpacing.value).toFixed(2);
     }
     els.printSizeVal.textContent  = String(Math.round(+els.printSize.value));
   }

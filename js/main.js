@@ -42,7 +42,8 @@ const state = {
   printMode:    'engrave',
   textDepth:    0.08,       // in dice units (before mm scaling)
   textSize:     1.0,        // multiplier on auto-fit size
-  textBevel:    0,          // bevel thickness applied to text geometry
+  textBevel:    0,          // kept at 0 — bevel slider was removed
+  charSpacing:  0,          // extra gap (dice units) between glyphs
   printSizeMM:  20,         // target largest extent in mm for STL export
 };
 

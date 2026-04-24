@@ -80,10 +80,12 @@ function buildSegmentGeometry(text, font, size, depth, bevel) {
 /**
  * Build an extruded TextGeometry that supports TeX-style sub/superscripts
  * via chem.js. Segments are laid out left-to-right; sub/sup are ~60% size
- * with a vertical offset. The final geometry is centered at the origin.
+ * with a vertical offset. Every glyph within a segment is built separately
+ * so `spacing` can insert a fixed gap between characters.
+ * The final geometry is centered at the origin.
  */
 function buildTextGeometry(label, font, opts) {
-  const { size, depth, bevel } = opts;
+  const { size, depth, bevel, spacing = 0 } = opts;
   const segments = parseChem(label).filter((s) => s.text.length > 0);
   if (segments.length === 0) return null;
 
@@ -95,14 +97,22 @@ function buildTextGeometry(label, font, opts) {
   let cursor = 0;
   for (const seg of segments) {
     const fs = seg.style === 'normal' ? size : smallSize;
-    const { geom, width } = buildSegmentGeometry(seg.text, font, fs, depth, bevel);
     const yOff =
       seg.style === 'sub' ? subOffsetY :
       seg.style === 'sup' ? supOffsetY : 0;
-    geom.translate(cursor, yOff, 0);
-    placed.push(geom);
-    cursor += width;
+    // Split into characters so inter-glyph spacing is uniform.
+    const chars = [...seg.text];
+    for (let i = 0; i < chars.length; i++) {
+      const { geom, width } = buildSegmentGeometry(chars[i], font, fs, depth, bevel);
+      geom.translate(cursor, yOff, 0);
+      placed.push(geom);
+      cursor += width + (i === chars.length - 1 ? 0 : spacing);
+    }
+    // Also apply spacing between segments (between base → sub, sub → base, etc.).
+    cursor += spacing;
   }
+  // The last segment added a trailing spacing — drop it.
+  if (segments.length > 0) cursor -= spacing;
 
   // Fast path for a single segment — avoid the merge overhead.
   let merged;
@@ -146,7 +156,8 @@ export function buildFaceTextMesh(faceMeta, font, config) {
   const depth = config.textDepth ?? 0.08;
   const bevel = Math.min(config.textBevel ?? 0, depth * 0.4);
 
-  const geom = buildTextGeometry(label, font, { size, depth, bevel });
+  const spacing = config.charSpacing ?? 0;
+  const geom = buildTextGeometry(label, font, { size, depth, bevel, spacing });
   if (!geom) return null;
 
   // Auto-fit: if the rendered text is wider than the face can hold, scale it
@@ -330,6 +341,7 @@ function buildFaceOutlineMesh(faceMeta, font, config) {
   const subY = -size * 0.25;
   const supY =  size * 0.35;
   const DIV = 12; // curve subdivision count per path
+  const spacing = config.charSpacing ?? 0;
 
   // Accumulate line-segment endpoints for every contour. Each shape's outer
   // ring + holes are emitted as boundary line segments only — no triangulation,
@@ -352,31 +364,37 @@ function buildFaceOutlineMesh(faceMeta, font, config) {
   let cursor = 0;
   for (const seg of segments) {
     const fs = seg.style === 'normal' ? size : smallSize;
-    const shapes = font.generateShapes(seg.text, fs);
-    if (!shapes || shapes.length === 0) continue;
-
-    // Measure segment width using the shapes' own bounds.
-    let sMinX = Infinity, sMaxX = -Infinity;
-    for (const shape of shapes) {
-      const pts = shape.getPoints(DIV);
-      for (const p of pts) {
-        if (p.x < sMinX) sMinX = p.x;
-        if (p.x > sMaxX) sMaxX = p.x;
-      }
-    }
-    const segWidth = isFinite(sMaxX - sMinX) ? sMaxX - sMinX : 0;
     const yOff = seg.style === 'sub' ? subY : seg.style === 'sup' ? supY : 0;
-    const xOff = cursor - sMinX;
+    const chars = [...seg.text];
 
-    for (const shape of shapes) {
-      pushRing(shape.getPoints(DIV), xOff, yOff);
-      for (const hole of shape.holes) {
-        pushRing(hole.getPoints(DIV), xOff, yOff);
+    // Each glyph of the segment is laid out individually so inter-glyph
+    // spacing matches the 3D text exactly.
+    for (let i = 0; i < chars.length; i++) {
+      const shapes = font.generateShapes(chars[i], fs);
+      if (!shapes || shapes.length === 0) continue;
+
+      let cMinX = Infinity, cMaxX = -Infinity;
+      for (const shape of shapes) {
+        const pts = shape.getPoints(DIV);
+        for (const p of pts) {
+          if (p.x < cMinX) cMinX = p.x;
+          if (p.x > cMaxX) cMaxX = p.x;
+        }
       }
-    }
+      const charWidth = isFinite(cMaxX - cMinX) ? cMaxX - cMinX : 0;
+      const xOff = cursor - cMinX;
 
-    cursor += segWidth;
+      for (const shape of shapes) {
+        pushRing(shape.getPoints(DIV), xOff, yOff);
+        for (const hole of shape.holes) {
+          pushRing(hole.getPoints(DIV), xOff, yOff);
+        }
+      }
+      cursor += charWidth + (i === chars.length - 1 ? 0 : spacing);
+    }
+    cursor += spacing;
   }
+  if (segments.length > 0) cursor -= spacing;
 
   if (positions.length === 0) return null;
 
