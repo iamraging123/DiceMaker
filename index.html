@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dice Maker — 3D Polyhedral Dice Designer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+      <header class="brand">
+        <h1>Dice maker</h1>
+        <p class="tagline">Polyhedral dice &mdash; designed in the browser.</p>
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">close</button>
+      </header>
+
+      <!-- Shape selector -->
+      <section class="card">
+        <div class="card-head">
+          <h2>Shape</h2>
+          <span class="badge" id="shape-badge">d6</span>
+        </div>
+
+        <select id="shape-select" class="select">
+          <option value="d3">d3 — Triangular Prism</option>
+          <option value="d4">d4 — Tetrahedron</option>
+          <option value="d6" selected>d6 — Cube</option>
+          <option value="d8">d8 — Octahedron</option>
+          <option value="d10">d10 — Pentagonal Trapezohedron</option>
+          <option value="d12">d12 — Dodecahedron</option>
+          <option value="d20">d20 — Icosahedron</option>
+          <option value="custom">Custom Polyhedron…</option>
+        </select>
+        <div id="custom-panel" class="custom-panel hidden">
+          <label class="field-label">Vertices &mdash; x, y, z per line</label>
+          <textarea id="custom-vertices" rows="4" placeholder="1, 1, 1&#10;-1, -1, 1&#10;..."></textarea>
+          <label class="field-label">Faces &mdash; vertex indices per line</label>
+          <textarea id="custom-faces" rows="4" placeholder="0, 1, 2&#10;0, 2, 3&#10;..."></textarea>
+          <button class="btn btn-primary" id="apply-custom">Apply custom shape</button>
+        </div>
+      </section>
+
+      <!-- Colors -->
+      <section class="card">
+        <div class="card-head"><h2>Appearance</h2></div>
+        <div class="color-grid">
+          <label class="color-field">
+            <span>Face</span>
+            <input type="color" id="face-color" value="#f4f1ec" />
+          </label>
+          <label class="color-field">
+            <span>Edge</span>
+            <input type="color" id="edge-color" value="#1a1a1a" />
+          </label>
+          <label class="color-field">
+            <span>Text</span>
+            <input type="color" id="text-color" value="#1a1a1a" />
+          </label>
+          <label class="color-field">
+            <span>Background</span>
+            <input type="color" id="bg-color" value="#f5f4f0" />
+          </label>
+        </div>
+        <div class="row">
+          <label class="check-field">
+            <input type="checkbox" id="show-edges" checked /> Show edges
+          </label>
+          <label class="check-field">
+            <input type="checkbox" id="metallic" /> Metallic finish
+          </label>
+        </div>
+      </section>
+
+      <!-- Faces -->
+      <section class="card">
+        <div class="card-head">
+          <h2>Face labels</h2>
+          <span class="muted small" id="face-count">6 faces</span>
+        </div>
+        <p class="muted small">Use <code>_</code> for subscript, <code>^</code> for superscript. Wrap multi-character runs in <code>{ }</code> &mdash; e.g. <code>H_2O</code>, <code>SO_4^{2-}</code>, <code>Ca^{2+}</code>.</p>
+        <div id="face-list" class="face-list"></div>
+      </section>
+
+      <!-- Actions -->
+      <section class="card">
+        <div class="card-head"><h2>Actions</h2></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="roll-btn">Roll</button>
+          <button class="btn" id="reset-btn">Reset view</button>
+        </div>
+      </section>
+
+      <!-- 3D Print -->
+      <section class="card">
+        <div class="card-head">
+          <h2>3d print</h2>
+          <span class="badge" id="print-size-badge">20 mm</span>
+        </div>
+        <div class="slider-field">
+          <div class="slider-head"><span>Text depth</span><span id="text-depth-val">0.08</span></div>
+          <input type="range" id="text-depth" min="0.02" max="0.30" step="0.01" value="0.08" />
+        </div>
+        <div class="slider-field">
+          <div class="slider-head"><span>Text size</span><span id="text-size-val">1.00×</span></div>
+          <input type="range" id="text-size" min="0.4" max="2.0" step="0.05" value="1.00" />
+        </div>
+        <div class="slider-field">
+          <div class="slider-head"><span>Text bevel</span><span id="text-bevel-val">0.00</span></div>
+          <input type="range" id="text-bevel" min="0" max="0.04" step="0.005" value="0" />
+        </div>
+        <div class="slider-field">
+          <div class="slider-head"><span>Print size &mdash; mm</span><span id="print-size-val">20</span></div>
+          <input type="range" id="print-size" min="8" max="60" step="1" value="20" />
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="export-stl">Export stl</button>
+          <button class="btn" id="export-stl-ascii">Export stl &mdash; ascii</button>
+        </div>
+        <p class="muted small" id="print-status">Stl exports in millimeters &mdash; slicer-ready.</p>
+      </section>
+
+      <!-- Export -->
+      <section class="card">
+        <div class="card-head"><h2>Export &amp; share</h2></div>
+        <div class="btn-row">
+          <button class="btn" id="export-png">Save png</button>
+          <button class="btn" id="export-gltf">Save gltf</button>
+          <button class="btn" id="export-obj">Save obj</button>
+          <button class="btn" id="save-config">Save json</button>
+          <button class="btn" id="load-config">Load json</button>
+          <button class="btn" id="share-link">Copy share link</button>
+        </div>
+        <input type="file" id="load-file" accept=".json" hidden />
+      </section>
+
+      <footer class="footer">
+        <span>Drag to rotate &mdash; scroll to zoom &mdash; right-drag to pan.</span>
+      </footer>
+    </aside>
+
+    <!-- ================= CANVAS ================= -->
+    <main class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div class="hud-top">
+        <div class="hud-pill" id="result-pill" hidden>Rolled &mdash;<strong id="rolled-value">—</strong></div>
+      </div>
+      <button class="mobile-fab" id="open-sidebar" aria-label="Open controls">Controls &rarr;</button>
+      <div class="toast" id="toast" hidden></div>
+    </main>
+  </div>
+
+  <!-- Three.js via importmap (works when served over HTTP) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/",
+        "three-mesh-bvh": "https://esm.sh/three-mesh-bvh@0.7.8?external=three&deps=three@0.165.0",
+        "three-bvh-csg": "https://esm.sh/three-bvh-csg@0.0.17?external=three,three-mesh-bvh&deps=three@0.165.0,three-mesh-bvh@0.7.8"
+      }
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
